@@ -1,10 +1,10 @@
 {
   "name": "nrunner",
   "description" : "Lightweight web container for NReports",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "author": "Phil Taylor",
   "repository": {
-  "url": "https://bitbucket.org/phil_a_taylor/nrunner"
+  "url": "https://github.com/phil-taylor/nrunner"
   },
   "licenses": [
     {
