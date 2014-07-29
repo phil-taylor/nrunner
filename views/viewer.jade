@@ -1,0 +1,67 @@
+extends layout
+
+block content 
+  #report-wrap
+
+  #pleaseWaitDialog.modal.hide(data-backdrop='static', data-keyboard='false')
+    .modal-header
+      h1 Running report
+    .modal-body
+      .progress.progress-striped.active
+        .bar(style='width: 100%;')
+
+  script(type='text/javascript').
+    $(document).ready(function(){
+
+      $('#pleaseWaitDialog').modal();
+      var retries = 0;
+
+      // polling code here
+      var poll = function() {
+      console.log('** check status **');
+      $.getJSON('!{statusUrl}', function(response) {
+          console.log('---->response');
+          console.log(response);
+          counter = response.count;
+          var elem = $('#status');
+          elem.text(response.status);
+
+          if (response.status == 'completed') {
+            console.log('loading report...');
+            
+            var report = $('<embed>');
+            report.attr('id', 'report');
+            report.attr('width', '100%');
+            report.attr('height', '100%');
+            report.attr('src', response.cached);
+
+            if (response.output == 'pdf') {
+              report.attr('type', 'application/pdf');
+            } 
+
+            $('#report-wrap').append(report);
+            
+            $('#pleaseWaitDialog').modal('hide');
+
+
+          } else {
+            setTimeout(function(){ poll(); }, 5000);
+          }
+
+      })
+      .error(
+        function() { 
+          console.log('error loading report...'); 
+          retries++;
+          if (retries < 24)
+          {
+            setTimeout(function(){ poll(); }, 5000);
+          } else {
+            $('.modal-header > h1').text('Report timeout. Please press browser refresh.');          
+          }
+            
+      });
+    }
+    poll();
+
+    });

@@ -1,0 +1,13 @@
+{
+	"name": "Report3",
+	"parameters" : [],
+	"datasource" : {
+		"name": "LiveJson",
+		"data": {
+			"people": [
+				{"id": 1, "name": "James Smith"},
+				{"id": 2, "name": "Sally Smith"}
+			]
+		}
+	}
+}

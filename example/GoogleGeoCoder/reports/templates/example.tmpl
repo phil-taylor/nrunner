@@ -1,0 +1,145 @@
+<html>
+	<head>
+		<title>Example Report (GoogleGeoCoder)</title>
+		<style>
+			@media print
+			{
+			    * {-webkit-print-color-adjust:exact;}			    
+			}
+
+			@page {
+			    size: letter landscape;
+			    margin: .17in .17in .17in .17in;
+			    @top-left { content: element(report-header); }
+			    @bottom-right { content: "page " counter(page) " / " counter(pages); }
+			}
+			
+			body {								
+				padding: 20px;
+				font-family: Arial;
+			}
+
+			.report {
+			}
+
+			.report-header {
+				padding-bottom: 5px;
+				height: 95px;				
+			}
+
+			.report-header .header-text {
+				position: relative;				
+				left: 250px;
+				top: 25px;
+			}
+
+			.report-header .header-text h2 {
+				display: block;
+				font-size: 1.5em;
+				font-weight: bold;
+				margin: 0;
+			}
+
+			.report-footer {
+				font-weight: bolder;
+				padding-top: 20px;
+			}
+
+			.report-body {
+				border-top: 2px solid silver;
+				padding-top: 20px;
+			}
+
+			.next-page {
+				page-break-after:always;
+			}
+
+			table {
+				width: 100%;
+				border: 1px solid royalblue;
+				padding: 0;
+				margin: 0;
+				border-collapse: collapse; 
+				border-spacing: 0px;
+			}
+
+			th {
+				background-color: mediumblue;				
+				border-right: 1px solid royalblue;
+				border-top: 1px solid royalblue;
+				color: white;
+				font-weight: bolder;
+				padding: 5px;
+			}			
+
+			td {				
+				border-right: 1px solid royalblue;
+				padding : 5px;
+			}
+
+			tr:nth-child(even) { background-color: lightblue; }
+			tr:nth-child(odd) { background-color: white; }
+			tr:nth-child(-n+21) { page-break-after:always; }
+
+		</style>
+	</head>
+	<body>		
+		<div class="report">
+			<div class="report-header">
+				<div class="header-text">
+					<h2>Example Report</h2>										
+					<div>using Google geocoder service</div>					
+				</div>
+			</div>
+			<div class="report-body">
+				<h3>Parameters</h3>
+				<table>
+				  <thead>
+				  	<tr>				  		
+						<th>Name</th>
+						<th>Value</th>
+				  	</tr>				  	
+				  </thead>
+				  <tbody>
+				  	{{#each parameters}}						
+						<tr>							
+							<td>{{name}}</td>
+							<td>{{value}}</td>
+						</tr>
+					{{/each}}
+				  </tbody>		
+				</table>
+
+				<h3>Address Found</h3>
+				<table>
+				  <thead>
+				  	<tr>				  		
+						<th>Name</th>
+						<th>Value</th>
+				  	</tr>				  	
+				  </thead>
+				  <tbody>
+				  	{{#each results.0.address_components}}		
+						<tr>							
+							<td>{{types}}</td>
+							<td>{{long_name}}</td>
+						</tr>
+					{{/each}}
+				  </tbody>		
+				</table>
+
+			</div>
+			<div class="report-footer">
+				<h3>Geo Location</h3>
+				<ul>	
+					<li>
+						(lat/long) - {{results.0.geometry.location.lat}}, {{results.0.geometry.location.lng}}
+					</li>
+					<li>
+						(location type) - {{results.0.geometry.location_type}}
+					</li>
+				</ul>
+			</div>			
+		</div>					
+	</body>
+</html>

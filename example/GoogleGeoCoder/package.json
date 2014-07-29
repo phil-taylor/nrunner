@@ -1,0 +1,14 @@
+{ "name": "nrunner-example"
+, "description": "Reporting Server Example (NRunner)"
+, "author": "Phil Taylor"
+, "version": "0.0.1"
+, "main": "server.js"
+, "engines": 
+  {
+    "node": "0.10.15"
+  }
+, "dependencies":
+  { 
+  	"nrunner": "*"	
+  }
+}

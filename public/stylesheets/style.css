@@ -1,0 +1,17 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+#report-wrap
+{
+  margin: 0px;
+  padding: 0px;
+  width: 100%; /* width: 7in; */
+  height: 900px; /* or height: 9.5in; */
+  clear: both;  
+}

@@ -1,0 +1,14 @@
+{
+	"AWSCredentials" : {
+		"region": "",
+		"key": "",
+		"secret": "",
+		"accountId": ""
+	},
+	"Worker" : {
+		"taskQueue" : "nreports-tasks",
+		"taskBucket" : "nreports/tasks",
+		"reportBucket" : "nreports/reports",
+		"urlExpiration" : "259200" 
+	}
+}

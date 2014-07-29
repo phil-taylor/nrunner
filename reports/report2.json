@@ -1,0 +1,11 @@
+{
+	"name": "Report2",
+	"parameters" : [
+		{"name": "firstName", "type": "string"},
+		{"name": "lastName", "type": "string"}
+	],
+	"datasource" : {
+		"name": "WebJson",
+		"datasourceUrl": "http://www.google.com/s=:firstName&:lastName"
+	}
+}

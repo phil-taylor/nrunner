@@ -1,0 +1,16 @@
+{
+	"name": "Report1",
+	"parameters" : [
+		{"name": "firstName", "type": "string"},
+		{"name": "lastName", "type": "string"}
+	],
+	"datasource" : {
+		"name": "LiveJson",
+		"data": {
+			"people": [
+				{"id": 1, "name": "James Smith"},
+				{"id": 2, "name": "Sally Smith"}
+			]
+		}
+	}
+}

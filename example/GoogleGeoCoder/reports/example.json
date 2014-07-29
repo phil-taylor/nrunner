@@ -1,0 +1,10 @@
+{
+	"name": "Example Google Geocoder Report",
+	"datasource": {
+		"name" : "WebJson",
+		"datasourceUrl" : "http://maps.googleapis.com/maps/api/geocode/json?address=:address&sensor=false"
+	},
+	"parameters": [
+		{ "name": "address", "type": "string", "value": "111 SW 5th Ave, Portland, OR 97204"}			
+	]
+}
