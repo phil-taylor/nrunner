@@ -61,7 +61,13 @@ S3Client.prototype.signedUrlExpiration = function(expiration) {
 
 S3Client.prototype.get = function(key, callback) {
 			var params = {Bucket: this.bucketName, Key: key};
-			this.s3.getObject(params, callback);			
+			this.s3.getObject(params, function(err,data){
+				if (err) {
+					callback(err);
+				} else {
+					callback(null, (typeof data.ContentType === 'application/json') ? JSON.parse(data.Body) : data.Body);
+				}
+			});			
 		};
 
 S3Client.prototype.save = function(data, options, callback) {
