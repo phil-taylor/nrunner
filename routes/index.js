@@ -268,6 +268,8 @@ exports.viewer = function(req, res){
 
       // get task
       function(cb) {
+        console.log('fetching task: ' + taskId);
+
         s3Client.bucket(config.Worker.taskBucket);
         s3Client.get(taskId, function(err, task){
           if (err || !task) {
@@ -282,8 +284,11 @@ exports.viewer = function(req, res){
       function(task, cb) {
 
         if (task) {
+
           var ext = (task.output == 'html') ? 'html' : 'pdf';
           var key = task.id + '.' + ext;
+          
+          console.log('setting new report url: ' + key);
 
           getReportUrl(key, function(err, url){
             if (err) {
@@ -301,7 +306,11 @@ exports.viewer = function(req, res){
       function(task, url, cb) {
 
         if (task) {
+          console.log('updating task: ' + taskId);
+
           task['cached'] = url;
+
+          console.log(task);
 
           s3Client.bucket(config.Worker.taskBucket);
           
@@ -321,6 +330,7 @@ exports.viewer = function(req, res){
 
       // get status url
       function(task, cb) {
+        console.log('get status url: ' + taskId);
         getStatusUrl(taskId, cb); 
       }
 
