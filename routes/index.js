@@ -40,7 +40,7 @@ var urlExpiration = config.Worker.urlExpiration || 60;
 var s3Client = 
   new S3Client()
       .AWSCredentials(config.AWSCredentials)
-      .signedUrlExpiration(urlExpiration);
+      .signedUrlExpiration(urlExpiration);      
 
 
 //var baseStatusUrl = 'https://s3-us-west-2.amazonaws.com/'.concat(config.Worker.taskBucket, '/');
@@ -268,6 +268,7 @@ exports.viewer = function(req, res){
 
       // get task
       function(cb) {
+        s3Client.bucket(config.Worker.taskBucket);
         s3Client.get(taskId, cb);
       },
 
@@ -290,6 +291,8 @@ exports.viewer = function(req, res){
 
         task['cached'] = url;
 
+        s3Client.bucket(config.Worker.taskBucket);
+        
         s3Client.save(task, { Key: task.id, ContentType: 'application/json' }, function(err, status){
           if (err) {
             util.log('Error saving working task status.');
