@@ -17,6 +17,7 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */ 
 var async = require('async');
+var util = require('util');
 var config = require('config');
 var SqsClient = require('../common/sqsclient');
 var S3Client = require('../common/s3client');
@@ -253,7 +254,6 @@ exports.runnerAdvanced = function(req, res){
 
 };
 
-
 /*
  * Report viewer
  *
@@ -269,44 +269,59 @@ exports.viewer = function(req, res){
       // get task
       function(cb) {
         s3Client.bucket(config.Worker.taskBucket);
-        s3Client.get(taskId, cb);
-      },
-
-      // get new report url -- updated expiration
-      function(task, cb) {
-        var ext = (task.output == 'html') ? 'html' : 'pdf';
-        var key = task.id + '.' + ext;
-
-        getReportUrl(key, function(err, url){
-          if (err) {
-            cb(err);
-          } else {
-            cb(null, task, url);
-          }      
-        });            
-      },
-
-      // update task report url
-      function(task, url, cb) {
-
-        task['cached'] = url;
-
-        s3Client.bucket(config.Worker.taskBucket);
-        
-        s3Client.save(task, { Key: task.id, ContentType: 'application/json' }, function(err, status){
-          if (err) {
-            util.log('Error saving working task status.');
-            util.error(err);
-            cb(err);
+        s3Client.get(taskId, function(err, task){
+          if (err || !task) {
+            cb(null,null); //suppress error -- skip task update steps
           } else {
             cb(null, task);
           }
         });
       },
 
+      // get new report url -- updated expiration
+      function(task, cb) {
+
+        if (task) {
+          var ext = (task.output == 'html') ? 'html' : 'pdf';
+          var key = task.id + '.' + ext;
+
+          getReportUrl(key, function(err, url){
+            if (err) {
+              cb(err);
+            } else {
+              cb(null, task, url);
+            }      
+          });
+        } else {
+          cb(null, null, null); // skip step
+        }
+      },
+
+      // update task report url
+      function(task, url, cb) {
+
+        if (task) {
+          task['cached'] = url;
+
+          s3Client.bucket(config.Worker.taskBucket);
+          
+          s3Client.save(task, { Key: task.id, ContentType: 'application/json' }, function(err, status){
+            if (err) {
+              util.log('Error saving working task status.');
+              util.error(err);
+              cb(err);
+            } else {
+              cb(null, task);
+            }
+          });
+        } else {
+          cb(null, null); //skip step
+        }
+      },
+
       // get status url
       function(task, cb) {
-        getStatusUrl(task.id, cb); 
+        getStatusUrl(taskId, cb); 
       }
 
     ], 
