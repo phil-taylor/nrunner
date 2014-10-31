@@ -165,6 +165,17 @@ Worker.prototype.start = function() {
 
 	if (!this.stopped) {
 
+		console.log('************************************************************');
+		console.log('* NRunner Worker Agent - Started                           *');
+		console.log('* ---------------------------------------------------------*');
+		console.log('* AWS Region     : ' + this.credentials.region );
+		console.log('* AWS Account Id : ' + this.credentials.accountId );
+		console.log('* Task Queue     : ' + this.taskQueueName );
+		console.log('* Task Bucket    : ' + this.taskBucketName );
+		console.log('* Report Bucket  : ' + this.reportBucketName );
+		console.log('* Url Expiration : ' + this.urlExpiration );
+		console.log('************************************************************');
+
 		this.s3Client.AWSCredentials(this.credentials);
 		this.s3Client.signedUrlExpiration(this.urlExpiration);
 

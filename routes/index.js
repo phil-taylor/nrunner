@@ -16,7 +16,7 @@
  *   with this program; if not, write to the Free Software Foundation, Inc.,
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */ 
-
+var async = require('async');
 var config = require('config');
 var SqsClient = require('../common/sqsclient');
 var S3Client = require('../common/s3client');
@@ -262,17 +262,62 @@ exports.runnerAdvanced = function(req, res){
  */
 exports.viewer = function(req, res){
   
-  //var statusUrl = baseStatusUrl + req.params.token;
-  
-  getStatusUrl(req.params.token, function(err, url){
-    if (err) {
-      console.log('*** ERROR ***');
-      console.error(err);
-      res.send(500);
-    } else {
-      res.render('viewer', { title: 'Viewer', statusUrl: url });
-    } 
-  })
-  
+  var taskId = req.params.token;
+
+  async.waterfall([
+
+      // get task
+      function(cb) {
+        s3Client.get(taskId, cb);
+      },
+
+      // get new report url -- updated expiration
+      function(task, cb) {
+        var ext = (task.output == 'html') ? 'html' : 'pdf';
+        var key = task.id + '.' + ext;
+
+        getReportUrl(key, function(err, url){
+          if (err) {
+            cb(err);
+          } else {
+            cb(null, task, url);
+          }      
+        });            
+      },
+
+      // update task report url
+      function(task, url, cb) {
+
+        task['cached'] = url;
+
+        s3Client.save(task, { Key: task.id, ContentType: 'application/json' }, function(err, status){
+          if (err) {
+            util.log('Error saving working task status.');
+            util.error(err);
+            cb(err);
+          } else {
+            cb(null, task);
+          }
+        });
+      },
+
+      // get status url
+      function(task, cb) {
+        getStatusUrl(task.id, cb); 
+      }
+
+    ], 
+
+    function(err, url){
+
+      if (err) {
+        console.log('*** ERROR ***');
+        console.error(err);
+        res.send(500);
+      } else {
+        res.render('viewer', { title: 'Viewer', statusUrl: url });
+      } 
+
+  });
 
 };

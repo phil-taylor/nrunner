@@ -1,7 +1,7 @@
 {
   "name": "nrunner",
   "description" : "Lightweight web container for NReports",
-  "version": "0.0.19",
+  "version": "0.0.22",
   "author": "Phil Taylor",
   "repository": {
   "url": "https://github.com/phil-taylor/nrunner"
@@ -17,7 +17,8 @@
     "express": "3.4.8",
     "jade": "*",
     "config": "*",    
-    "aws-sdk": "*",
+    "aws-sdk": "2.0.8",
+    "async" : "*",
     "nreports": "*"
   }
 }

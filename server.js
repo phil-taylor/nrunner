@@ -28,6 +28,7 @@ Server.prototype.start = function() {
 	var reportsRoute = require('./routes/reports');
 	var http = require('http');
 	var path = require('path');
+	var config = require('config');
 
 	var app = express();
 
@@ -58,6 +59,19 @@ Server.prototype.start = function() {
 	app.post('/runner', routes.runnerAdvanced);
 	app.get('/viewer/:token', routes.viewer);
 	app.get('/reports', reportsRoute.index);
+
+
+	console.log('************************************************************');
+	console.log('* NRunner Server - Started                                 *');
+	console.log('* ---------------------------------------------------------*');
+	console.log('* AWS Region     : ' + config.AWSCredentials.region );
+	console.log('* AWS Account Id : ' + config.AWSCredentials.accountId );
+	console.log('* Task Queue     : ' + config.Worker.taskQueue );
+	console.log('* Task Bucket    : ' + config.Worker.taskBucket );
+	console.log('* Report Bucket  : ' + config.Worker.reportBucket );
+	console.log('* Url Expiration : ' + config.Worker.urlExpiration );
+	console.log('************************************************************');
+
 
 	http.createServer(app).listen(app.get('port'), function(){
 	  console.log('Express server listening on port ' + app.get('port'));
