@@ -65,7 +65,7 @@ S3Client.prototype.get = function(key, callback) {
 				if (err) {
 					callback(err);
 				} else {
-					callback(null, (typeof data.ContentType === 'application/json') ? JSON.parse(data.Body.toString()) : data.Body);
+					callback(null, (data.ContentType === 'application/json') ? JSON.parse(data.Body.toString()) : data.Body);
 				}
 			});			
 		};

@@ -275,6 +275,8 @@ exports.viewer = function(req, res){
           if (err || !task) {
             cb(null,null); //suppress error -- skip task update steps
           } else {
+            console.log('task found ->');
+            console.log(task);
             cb(null, task);
           }
         });
@@ -349,3 +351,98 @@ exports.viewer = function(req, res){
   });
 
 };
+
+
+/*
+ * Report viewer emeddable link to native PDF
+ *
+ * http://server/embed/token
+ * 
+ */
+exports.embed = function(req, res){
+  
+  var taskId = req.params.token;
+
+  async.waterfall([
+
+      // get task
+      function(cb) {
+        console.log('fetching task: ' + taskId);
+
+        s3Client.bucket(config.Worker.taskBucket);
+        s3Client.get(taskId, function(err, task){
+          if (err || !task) {
+            cb(null,null); //suppress error -- skip task update steps
+          } else {
+            console.log('task found ->');
+            console.log(task);
+            cb(null, task);
+          }
+        });
+      },
+
+      // get new report url -- updated expiration
+      function(task, cb) {
+
+        if (task) {
+
+          var ext = (task.output == 'html') ? 'html' : 'pdf';
+          var key = task.id + '.' + ext;
+          
+          console.log('setting new report url: ' + key);
+
+          getReportUrl(key, function(err, url){
+            if (err) {
+              cb(err);
+            } else {
+              cb(null, task, url);
+            }      
+          });
+        } else {
+          cb(null, null, null); // skip step
+        }
+      },
+
+      // update task report url
+      function(task, url, cb) {
+
+        if (task) {
+          console.log('updating task: ' + taskId);
+
+          task['cached'] = url;
+
+          console.log(task);
+
+          s3Client.bucket(config.Worker.taskBucket);
+          
+          s3Client.save(task, { Key: task.id, ContentType: 'application/json' }, function(err, status){
+            if (err) {
+              util.log('Error saving working task status.');
+              util.error(err);
+              cb(err);
+            } else {
+              cb(null, task);
+            }
+          });
+        } else {
+          cb(null, null); //skip step
+        }
+      }
+    ], 
+
+    function(err, task){
+
+      if (err) {
+        console.log('*** ERROR ***');
+        console.error(err);
+        res.send(500);
+      } else {
+        res.redirect(301, task.cached);
+      } 
+
+  });
+
+};
+
+
+

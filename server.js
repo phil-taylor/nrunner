@@ -58,6 +58,7 @@ Server.prototype.start = function() {
 	app.post('/runner/:report', routes.runnerAdvanced);
 	app.post('/runner', routes.runnerAdvanced);
 	app.get('/viewer/:token', routes.viewer);
+	app.get('/embed/:token', routes.embed);
 	app.get('/reports', reportsRoute.index);
 
 
