@@ -158,9 +158,11 @@ exports.runner = function(req, res){
     } else {
       if (runMode == 'background') {
         res.send(200, queuedTask);    
+      } else if (runMode == 'embed') {
+        res.redirect('/embed/' + token); 
       } else {
         res.redirect('/viewer/' + token); 
-      }       
+      }                    
     }
   });
  
@@ -246,9 +248,11 @@ exports.runnerAdvanced = function(req, res){
     } else {
       if (runMode == 'background') {
         res.send(200, queuedTask);    
+      } else if (runMode == 'embed') {
+        res.redirect('/embed/' + token); 
       } else {
         res.redirect('/viewer/' + token); 
-      }       
+      }                    
     }
   });
 
@@ -365,21 +369,30 @@ exports.embed = function(req, res){
 
   async.waterfall([
 
-      // get task
-      function(cb) {
-        console.log('fetching task: ' + taskId);
+      // get task -- should wait about 28 seconds for report
+      async.retry({times: 5, interval: 7000 }, 
+        function(cb) {
+          console.log('fetching task: ' + taskId);
 
-        s3Client.bucket(config.Worker.taskBucket);
-        s3Client.get(taskId, function(err, task){
-          if (err || !task) {
-            cb(null,null); //suppress error -- skip task update steps
-          } else {
-            console.log('task found ->');
-            console.log(task);
-            cb(null, task);
-          }
-        });
-      },
+          s3Client.bucket(config.Worker.taskBucket);
+          s3Client.get(taskId, function(err, task){
+            if (err || !task) {
+              console.log('** report not found -- retry ** ');
+              new Error("Report not found");
+            } else {
+              console.log('report found ->');
+              console.log(task);
+
+              if (task.status === "completed") {
+                cb(null, task);  
+              }
+              else {
+                console.log('** report still running -- retry ** ');
+                new Error("Report is running");
+              }
+            }
+          });
+        }),
 
       // get new report url -- updated expiration
       function(task, cb) {
