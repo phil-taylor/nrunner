@@ -370,7 +370,7 @@ exports.embed = function(req, res){
   async.waterfall([
 
       // get task -- should wait about 28 seconds for report
-      async.retry({times: 5, interval: 7000 }, 
+      async.retry({times: 28, interval: 1000 }, 
         function(cb) {
           console.log('fetching task: ' + taskId);
 
