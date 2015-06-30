@@ -378,7 +378,7 @@ exports.embed = function(req, res){
           s3Client.get(taskId, function(err, task){
             if (err || !task) {
               console.log('** report not found -- retry ** ');
-              new Error("Report not found");
+              cb(new Error("Report not found"));
             } else {
               console.log('report found ->');
               console.log(task);
@@ -388,7 +388,7 @@ exports.embed = function(req, res){
               }
               else {
                 console.log('** report still running -- retry ** ');
-                new Error("Report is running");
+                cb(new Error("Report is running"));
               }
             }
           });
