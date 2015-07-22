@@ -62,6 +62,12 @@ ReportRunner.prototype.execute = function(task, callback) {
 	 	report.setDatasource(this.provider.loadDatasource(task.report));
 	 }
 
+	 if(task.progressUpdateUrl) {
+	 	report.setProgressUpdateUrl(task.progressUpdateUrl);
+	 } else if (report.progressUpdateUrl) {
+	 	task.progressUpdateUrl = report.progressUpdateUrl;
+	 }
+
 	 report.setTemplate(template.toString());	 
 	 
 	 console.log('ReportRunner - setting parameters...');

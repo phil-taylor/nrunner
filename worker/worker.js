@@ -116,11 +116,46 @@ function Worker() {
 			}
 		}
 
+		if(task.progressUpdateUrl) {
+			this.handleRemoteUpdates(task, function(err, response_body) {
+				if (err) {
+					util.log('Error handling remote status updates.');
+					util.error(err);
+				}
+			});
+		}
+
 		this.s3Client.save(task, { Key: task.id, ContentType: 'application/json' }, function(err, status){
 			if (err) {
 				util.log('Error saving working task status.');
 				util.error(err);
 			}
+		});
+	};
+
+	this.handleRemoteUpdates = function(task, cb) {
+		var url = task.progressUpdateUrl;
+
+		var params = task;
+		// var params = {
+		// 	report: task.report,
+		// 	output: task.output,
+		// 	expires: task.expires,      
+		// 	status: task.status,
+		// 	parameters: task.parameters
+		// 	// id: task.id,
+		// 	// url: task.url,
+		// 	// cached: task.cashed,   
+		// 	// progressUpdateUrl: task.progressUpdateUrl,
+		// 	// runmode: task.runmode,
+		// 	// data: task.data
+		// };
+
+		require('request').post({
+			url: url, 
+			form: params
+		}, function (error, response, body) {
+			cb(error, body);
 		});
 	};
 

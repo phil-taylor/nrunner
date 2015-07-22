@@ -129,6 +129,7 @@ exports.runner = function(req, res){
   var runMode = query.runmode || 'inline';
   var output = query.output || 'html';
   var expires = query.expires || 1;
+  var progressUpdateUrl = query.progressUpdateUrl;
   var otherParams = [];
 
   delete query.id;
@@ -145,7 +146,8 @@ exports.runner = function(req, res){
   	report: report,
   	output: output,
   	expires: expires,
-  	parameters: otherParams
+  	parameters: otherParams,
+    progressUpdateUrl: progressUpdateUrl
   }; 
 
   task.url = req.protocol + '://' + req.host + '/viewer/' + token;
