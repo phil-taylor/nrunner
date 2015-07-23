@@ -372,29 +372,38 @@ exports.embed = function(req, res){
   async.waterfall([
 
       // get task -- should wait about 28 seconds for report
-      async.retry({times: 28, interval: 1000 }, 
-        function(cb) {
+      function(cb) {
+        async.retry({times: 28, interval: 1000 }, 
+        function(done, results) {
           console.log('fetching task: ' + taskId);
 
           s3Client.bucket(config.Worker.taskBucket);
           s3Client.get(taskId, function(err, task){
             if (err || !task) {
               console.log('** report not found -- retry ** ');
-              cb(new Error("Report not found"));
+              done(new Error("Report not found"));
             } else {
               console.log('report found ->');
               console.log(task);
 
               if (task.status === "completed") {
-                cb(null, task);  
+                done(null, task);  
               }
               else {
                 console.log('** report still running -- retry ** ');
-                cb(new Error("Report is running"));
+                done(new Error("Report is running"));
               }
             }
           });
-        }),
+        },
+        function(err, result){
+          if (err) {
+            cb(err);
+          } else {
+            cb(null, result);
+          }
+        })
+      },      
 
       // get new report url -- updated expiration
       function(task, cb) {
