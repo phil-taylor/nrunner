@@ -30,7 +30,13 @@ LocalProvider.prototype.constructor = LocalProvider;
 
 LocalProvider.prototype.loadReport = function(reportId) { 
 	var data = fs.readFileSync(this.reportsLocation + '/' + reportId + '.json');
-	return JSON.parse(data);
+
+	return JSON.parse(data, function (key, value) {
+        if (value && (typeof value === 'string') && value.indexOf("function") === 0) {
+            var jsFunc = new Function('return ' + value)();
+            return jsFunc;
+        }
+    });
 };
 
 LocalProvider.prototype.loadTemplate = function(reportId) { 
