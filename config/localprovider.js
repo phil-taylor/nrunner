@@ -35,6 +35,8 @@ LocalProvider.prototype.loadReport = function(reportId) {
         if (value && (typeof value === 'string') && value.indexOf("function") === 0) {
             var jsFunc = new Function('return ' + value)();
             return jsFunc;
+        } else {
+            return value;
         }
     });
 };
