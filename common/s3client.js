@@ -1,4 +1,4 @@
-/*
+	/*
  *   This file is part of NRunner. A free framework for hosting and running reports built for the NReports framework.
  *   Copyright (C) 2014  Phil Taylor
  *
@@ -57,6 +57,20 @@ S3Client.prototype.signedUrlExpiration = function(expiration) {
 			this.urlExpiration = expiration;
 			return this;
 		};
+
+S3Client.prototype.exists = function(key, callback) {
+	var params = { Bucket: this.bucketName, Key: key};
+	this.s3.head(params, function(err,data){
+		if (err && err.code === 'NotFound') {
+			callback(null, false);
+		} else if (err) {
+			callback(err);
+		} else {
+			callback(null, true);
+		}
+	});
+};
+
 
 
 S3Client.prototype.get = function(key, callback) {

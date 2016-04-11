@@ -310,6 +310,28 @@ exports.viewer = function(req, res){
         }
       },
 
+      function(task, url, cb) {
+        if (task) {
+
+          var ext = (task.output == 'html') ? 'html' : 'pdf';
+          var key = task.id + '.' + ext;
+
+          console.log('checking and updating status for report: ' + key);
+
+          s3Client.exists(key, function(err, fileExists){
+            if (err) return cb(err);
+
+            if (fileExists) {
+              task.status = 'completed';
+            }
+            cb(null, task, url);
+          });
+
+        } else {
+          cb(null, null, null); // skip step
+        }
+      },
+
       // update task report url
       function(task, url, cb) {
 
