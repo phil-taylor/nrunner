@@ -279,6 +279,7 @@ exports.viewer = function(req, res){
         s3Client.bucket(config.Worker.taskBucket);
         s3Client.get(taskId, function(err, task){
           if (err || !task) {
+            console.error(err);
             cb(null,null); //suppress error -- skip task update steps
           } else {
             console.log('task found ->');
@@ -311,13 +312,17 @@ exports.viewer = function(req, res){
       },
 
       function(task, url, cb) {
-        if (task) {
+        console.log('*** DEBUG ***');
+        console.log(task);
+
+        if (task && task.status === 'pending') {
 
           var ext = (task.output == 'html') ? 'html' : 'pdf';
           var key = task.id + '.' + ext;
 
           console.log('checking and updating status for report: ' + key);
 
+          s3Client.bucket(config.Worker.reportBucket);
           s3Client.exists(key, function(err, fileExists){
             if (err) return cb(err);
 
@@ -412,8 +417,23 @@ exports.embed = function(req, res){
                 done(null, task);  
               }
               else {
-                console.log('** report still running -- retry ** ');
-                done(new Error("Report is running"));
+
+                var ext = (task.output == 'html') ? 'html' : 'pdf';
+                var key = task.id + '.' + ext;
+
+                s3Client.bucket(config.Worker.reportBucket);
+                s3Client.exists(key, function(e, fileExists){
+
+                  if (e) return cb(err);
+
+                  if (fileExists) {
+                    task.status = 'completed';
+                    done(null, task);
+                  } else {
+                    console.log('** report still running -- retry ** ');
+                    done(new Error("Report is running"));
+                  }
+                });
               }
             }
           });

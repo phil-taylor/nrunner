@@ -60,7 +60,7 @@ S3Client.prototype.signedUrlExpiration = function(expiration) {
 
 S3Client.prototype.exists = function(key, callback) {
 	var params = { Bucket: this.bucketName, Key: key};
-	this.s3.head(params, function(err,data){
+	this.s3.headObject(params, function(err,data){
 		if (err && err.code === 'NotFound') {
 			callback(null, false);
 		} else if (err) {
