@@ -7,8 +7,8 @@
 	},
 	"Worker" : {
 		"taskQueue" : "nreports-tasks",
-		"taskBucket" : "nreports/tasks",
-		"reportBucket" : "nreports/reports",
-		"urlExpiration" : "259200" 
+		"taskLocation" : "nreports/tasks",
+		"reportLocation" : "nreports/reports",
+		"expiration" : "259200"
 	}
 }

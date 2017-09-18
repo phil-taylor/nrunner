@@ -1,3 +1,5 @@
+//TODO: refactor to integrate new QueueClient and drive actual provider using app config
+//TODO: update unit tests
 /*
  *   This file is part of NRunner. A free framework for hosting and running reports built for the NReports framework.
  *   Copyright (C) 2014  Phil Taylor
@@ -22,15 +24,12 @@
  * 
  */
 var util = require('util');
-var SqsClient = require('../common/sqsclient');
+var QueueProvider = require('../queue/queueprovider');
 
-function PollingAgent(){	
+function PollingAgent(){
+	this.provider = QueueProvider.load(config);
 	this.stopped = false;
 }
-
-PollingAgent.prototype = new SqsClient();
-PollingAgent.prototype.constructor = PollingAgent;
-
 
 PollingAgent.prototype.stop = function() {
 	this.stopped = true;
@@ -48,44 +47,11 @@ PollingAgent.prototype.listen = function(callback) {
 
 	if (!this.stopped) {
 
-		if (self.credentials == null || self.sqs == null)
-			throw new Error('You must supply credentials first!')				
-		
-		sqs_callback = function(err,response) {
-			util.log('PollingAgent -> message received');
-			
-			if (err) {
-				util.log('ERROR -> ' + err);						
-				return callback(err);
-			} else if (response) {
-				console.log(response);
-				
-				if (response.Messages) {
-
-					var msg = response.Messages[0];
-					
-					util.log('PollingAgent -> deleting message: ' + msg.MessageId);
-					
-					self.deleteMessage(msg.ReceiptHandle, function(e){
-						
-						if (e) {
-						
-							util.log('ERROR -> ' + e);
-							callback(e);ß
-						}
-					});
-					
-					callback(null, JSON.parse(msg.Body));
-				}
-				
-			}
-			
+		self.provider.consume(function(err, msg) {
+			callback(err, msg);
 			self.listen(callback);
-			
-		};
-		
-		self.receiveMessage(sqs_callback);
-	
+		});
+
 	}
 };
 

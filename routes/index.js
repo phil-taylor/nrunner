@@ -19,8 +19,8 @@
 var async = require('async');
 var util = require('util');
 var config = require('config');
-var SqsClient = require('../common/sqsclient');
-var S3Client = require('../common/s3client');
+var QueueClient = require('../queue/queueclient');
+var StorageProvider = require('../storage/storageprovider');
 
 if (config.AWSCredentials) {
   console.log('AWS configuration detected...');
@@ -31,28 +31,28 @@ if (config.AWSCredentials) {
   process.exit();
 }
 
-var sqsClient = 
-  new SqsClient()
-      .AWSCredentials(config.AWSCredentials)
-      .queue(config.Worker.taskQueue);
+var queue =
+    QueueClient.load(config)
+        .AWSCredentials(config.AWSCredentials)
+        .queue(config.Worker.taskQueue);
 
-var urlExpiration = config.Worker.urlExpiration || 60;
+var urlExpiration = config.Worker.expiration || 60;
 
-var s3Client = 
-  new S3Client()
+var storage =
+    StorageProvider.load(config)
       .AWSCredentials(config.AWSCredentials)
-      .signedUrlExpiration(urlExpiration);      
+      .setExripation(urlExpiration);
 
 
 //var baseStatusUrl = 'https://s3-us-west-2.amazonaws.com/'.concat(config.Worker.taskBucket, '/');
 //var baseReportUrl = 'https://s3-us-west-2.amazonaws.com/'.concat(config.Worker.reportBucket, '/');
 
 function getStatusUrl(key, callback) {
-  s3Client.getSignedUrl(key, config.Worker.taskBucket, callback);
+  storage.getLocation(key, config.Worker.taskBucket, callback);
 }
 
 function getReportUrl(key, callback) {
-  s3Client.getSignedUrl(key, config.Worker.reportBucket, callback);
+  storage.getLocation(key, config.Worker.reportBucket, callback);
 }
 
 function queueTask(task, callback) {
@@ -65,7 +65,7 @@ function queueTask(task, callback) {
       callback(err);
     } else {
       task.cached = url;
-      sqsClient.sendMessage(task, function(err, response) {
+      queue.publish(task, function(err, response) {
         if (err) {
           callback(err);
         } else {
@@ -276,8 +276,8 @@ exports.viewer = function(req, res){
       function(cb) {
         console.log('fetching task: ' + taskId);
 
-        s3Client.bucket(config.Worker.taskBucket);
-        s3Client.get(taskId, function(err, task){
+        storage.folder(config.Worker.taskBucket);
+        storage.get(taskId, function(err, task){
           if (err || !task) {
             console.error(err);
             cb(null,null); //suppress error -- skip task update steps
@@ -322,8 +322,8 @@ exports.viewer = function(req, res){
 
           console.log('checking and updating status for report: ' + key);
 
-          s3Client.bucket(config.Worker.reportBucket);
-          s3Client.exists(key, function(err, fileExists){
+          storage.folder(config.Worker.reportBucket);
+          storage.exists(key, function(err, fileExists){
             if (err) return cb(err);
 
             if (fileExists) {
@@ -347,9 +347,9 @@ exports.viewer = function(req, res){
 
           console.log(task);
 
-          s3Client.bucket(config.Worker.taskBucket);
+          storage.bucket(config.Worker.taskBucket);
           
-          s3Client.save(task, { Key: task.id, ContentType: 'application/json' }, function(err, status){
+          storage.save(task, { Key: task.id, ContentType: 'application/json' }, function(err, status){
             if (err) {
               util.log('Error saving working task status.');
               util.error(err);
@@ -404,8 +404,8 @@ exports.embed = function(req, res){
         function(done, results) {
           console.log('fetching task: ' + taskId);
 
-          s3Client.bucket(config.Worker.taskBucket);
-          s3Client.get(taskId, function(err, task){
+          storage.folder(config.Worker.taskBucket);
+          storage.get(taskId, function(err, task){
             if (err || !task) {
               console.log('** report not found -- retry ** ');
               done(new Error("Report not found"));
@@ -421,8 +421,8 @@ exports.embed = function(req, res){
                 var ext = (task.output == 'html') ? 'html' : 'pdf';
                 var key = task.id + '.' + ext;
 
-                s3Client.bucket(config.Worker.reportBucket);
-                s3Client.exists(key, function(e, fileExists){
+                storage.folder(config.Worker.reportBucket);
+                storage.exists(key, function(e, fileExists){
 
                   if (e) return cb(err);
 
@@ -479,9 +479,9 @@ exports.embed = function(req, res){
 
           console.log(task);
 
-          s3Client.bucket(config.Worker.taskBucket);
+          storage.folder(config.Worker.taskBucket);
           
-          s3Client.save(task, { Key: task.id, ContentType: 'application/json' }, function(err, status){
+          storage.save(task, { Key: task.id, ContentType: 'application/json' }, function(err, status){
             if (err) {
               util.log('Error saving working task status.');
               util.error(err);

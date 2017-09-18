@@ -19,7 +19,7 @@
 
 var AWS = require('aws-sdk');
 var util = require('util');
-
+var QueueProvider = require('./queueprovider');
 
 function SqsClient(){
 	this.sqs = null;
@@ -28,6 +28,10 @@ function SqsClient(){
 	this.queueUrl = null;
 	this.parameters = { MaxNumberOfMessages: 1, VisibilityTimeout: 30, WaitTimeSeconds: 20 }; //defaults
 }
+
+SqsClient.prototype = new QueueProvider();
+SqsClient.prototype.constructor = SqsClient;
+
 
 SqsClient.prototype.AWSCredentials = function(credentials) {
 			this.credentials = credentials;
@@ -84,7 +88,48 @@ SqsClient.prototype.resolveQueueUrl = function(callback){
 	}
 }
 
-SqsClient.prototype.sendMessage = function(message, callback){
+SqsClient.prototype.consume = function(callback) {
+
+	var self = this;
+
+	if (self.credentials == null || self.sqs == null)
+		throw new Error('You must supply credentials first!')
+
+	sqs_callback = function(err,response) {
+		util.log('PollingAgent -> message received');
+
+		if (err) {
+			util.log('ERROR -> ' + err);
+			return callback(err);
+		} else if (response) {
+			console.log(response);
+
+			if (response.Messages) {
+
+				var msg = response.Messages[0];
+
+				util.log('PollingAgent -> deleting message: ' + msg.MessageId);
+
+				self.deleteMessage(msg.ReceiptHandle, function(e){
+
+					if (e) {
+
+						util.log('ERROR -> ' + e);
+						callback(e);ß
+					}
+				});
+
+				callback(null, JSON.parse(msg.Body));
+			}
+
+		}
+
+	};
+
+	self.receiveMessage(sqs_callback);
+}
+
+SqsClient.prototype.publish = function(message, callback){
 	var self = this;
 	self.resolveQueueUrl(function(err, url){
 		if (err) {

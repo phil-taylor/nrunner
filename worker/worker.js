@@ -18,7 +18,7 @@
  */ 
 
 var PollingAgent = require('./pollingagent');
-var S3Client = require('../common/s3client');
+var StorageProvider = require('../storage/storageprovider');
 var ReportRunner = require('./reportrunner');
 var util = require('util');
 var crypto = require('crypto');
@@ -26,27 +26,12 @@ var crypto = require('crypto');
 function Worker() {	
 	this.stopped = false;
 	this.taskQueueName = '';
-	this.reportBucketName = '';
+	this.reportLocation = '';
 	this.agent = new PollingAgent();
-	this.s3Client = new S3Client();
+	this.storage = StorageProvider.load();
 	this.runner = new ReportRunner();
 	this.credentials = null;
-	this.urlExpiration = 60; //default
-
-	this.getBucketUrl = function(taskId, extension, callback) {
-
-		/*
-		return 'https://s3-us-west-2.amazonaws.com/'
-				.concat(this.reportBucketName, 
-						'/', 
-						taskId, 
-						'.', 
-						extension);
-		*/	
-		var key = taskId + '.' + extension;
-		
-		this.s3Client.getSignedUrl(key, this.reportBucketName, callback);
-	};
+	this.expiration = 60; //default
 
 	this.executeTask = function(task){
 		util.log('Worker -> execute task...');
@@ -71,9 +56,9 @@ function Worker() {
 		
 			console.log('** CONTENT LENGTH -->' + output.length);
 
-			self.s3Client.bucket(self.reportBucketName);
+			self.storage.folder(self.reportLocation);
 
-			self.s3Client.save(output, { 
+			self.storage.save(output, {
 					Key: filename, 
 					ContentType: contentType 
 				}, function(err, status){
@@ -84,7 +69,7 @@ function Worker() {
 					self.updateStatus(task, 'error - ' + err.toString());
 				} else {
 
-					self.getBucketUrl(task.id, extension, function(err, url){
+					self.storage.getLocation(task.id + '.' + extension, function(err, url){
 
 						if (err) {
 							util.log('Error saving working task status.');
@@ -106,7 +91,7 @@ function Worker() {
 		
 		util.log('-----> Status Change: ' + task.id + ' / ' + status);
 
-		this.s3Client.bucket(this.taskBucketName);
+		this.storage.folder(this.taskBucketName);
 
 		task.status = status;
 
@@ -125,7 +110,7 @@ function Worker() {
 			});
 		}
 
-		this.s3Client.save(task, { Key: task.id, ContentType: 'application/json' }, function(err, status){
+		this.storage.save(task, { Key: task.id, ContentType: 'application/json' }, function(err, status){
 			if (err) {
 				util.log('Error saving working task status.');
 				util.error(err);
@@ -173,13 +158,13 @@ Worker.prototype.taskQueue = function(queueName) {
 	return this;
 };
 
-Worker.prototype.taskBucket = function(bucketName) {
-	this.taskBucketName = bucketName;	
+Worker.prototype.taskLocation = function(location) {
+	this.taskLocation = location;
 	return this;
 };
 
-Worker.prototype.reportBucket = function(bucketName) {
-	this.reportBucketName = bucketName;	
+Worker.prototype.reportLocation = function(location) {
+	this.reportLocation = location;
 	return this;
 };
 
@@ -188,8 +173,8 @@ Worker.prototype.AWSCredentials = function(credentials) {
 	return this;
 };
 
-Worker.prototype.signedUrlExpiration = function(expiration) {
-			this.urlExpiration = expiration;
+Worker.prototype.setExpiration = function(expiration) {
+			this.expiration = expiration;
 			return this;
 		};
 
@@ -206,13 +191,12 @@ Worker.prototype.start = function() {
 		console.log('* AWS Region     : ' + this.credentials.region );
 		console.log('* AWS Account Id : ' + this.credentials.accountId );
 		console.log('* Task Queue     : ' + this.taskQueueName );
-		console.log('* Task Bucket    : ' + this.taskBucketName );
-		console.log('* Report Bucket  : ' + this.reportBucketName );
-		console.log('* Url Expiration : ' + this.urlExpiration );
+		console.log('* Task Bucket    : ' + this.taskLocation );
+		console.log('* Report Bucket  : ' + this.reportLocation );
+		console.log('* Url Expiration : ' + this.expiration );
 		console.log('************************************************************');
 
-		this.s3Client.AWSCredentials(this.credentials);
-		this.s3Client.signedUrlExpiration(this.urlExpiration);
+		this.storage.Configure(this.credentials, { signedUrlExpiration: this.expiration });
 
 		this.agent
 			.AWSCredentials(this.credentials)

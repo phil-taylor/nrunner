@@ -22,41 +22,46 @@
  */
 var AWS = require('aws-sdk');
 var util = require('util');
+var StorageProvider = require('./storageprovider');
 
 function S3Client(){	
 	this.s3 = null;	
 	this.defaults = { ACL: 'private' };
 	this.credentials = null;
-	this.urlExpiration = 60; //default
+	this.expiration = 60; //default
 }
 
-S3Client.prototype.AWSCredentials = function(credentials) {
-			this.credentials = credentials;
+S3Client.prototype = new S3Client();
+S3Client.prototype.constructor = StorageProvider;
 
-			AWS.config.update({ 
-				"accessKeyId": credentials.key, 
-				"secretAccessKey": credentials.secret, 
-				"region": credentials.region });
 
-			this.s3 = new AWS.S3({apiVersion: '2006-03-01'});
+S3Client.prototype.Configure = function(credentials) {
+	this.credentials = credentials;
 
-			return this;
-		};
+	AWS.config.update({
+		"accessKeyId": credentials.key,
+		"secretAccessKey": credentials.secret,
+		"region": credentials.region });
+
+	this.s3 = new AWS.S3({apiVersion: '2006-03-01'});
+
+	return this;
+};
 		
 S3Client.prototype.bucket = function(bucketName) {
-			this.bucketName = bucketName;
-			return this;
-		};
+	this.bucketName = bucketName;
+	return this;
+};
 
 S3Client.prototype.defaults = function(s3Parameters) {
-			this.defaults = s3Parameters;
-			return this;
-		};
+	this.defaults = s3Parameters;
+	return this;
+};
 
 S3Client.prototype.signedUrlExpiration = function(expiration) {
-			this.urlExpiration = expiration;
-			return this;
-		};
+	this.expiration = expiration;
+	return this;
+};
 
 S3Client.prototype.exists = function(key, callback) {
 	var params = { Bucket: this.bucketName, Key: key};
@@ -74,53 +79,57 @@ S3Client.prototype.exists = function(key, callback) {
 
 
 S3Client.prototype.get = function(key, callback) {
-			var params = {Bucket: this.bucketName, Key: key};
-			this.s3.getObject(params, function(err,data){
-				if (err) {
-					callback(err);
-				} else {
-					callback(null, (data.ContentType === 'application/json') ? JSON.parse(data.Body.toString()) : data.Body);
-				}
-			});			
-		};
+	var params = {Bucket: this.bucketName, Key: key};
+	this.s3.getObject(params, function(err,data){
+		if (err) {
+			callback(err);
+		} else {
+			callback(null, (data.ContentType === 'application/json') ? JSON.parse(data.Body.toString()) : data.Body);
+		}
+	});
+};
 
 S3Client.prototype.save = function(data, options, callback) {
-			var params = this.defaults;
+	var params = this.defaults;
 
-			if (options && typeof options == 'function') {
-				callback = options;
-				options = null;
-			}
+	if (options && typeof options == 'function') {
+		callback = options;
+		options = null;
+	}
 
-			if (options) {
-				for(var item in options) {
-					params[item] = options[item];
-				}
-			}
+	if (options) {
+		for(var item in options) {
+			params[item] = options[item];
+		}
+	}
 
 
-			params.Bucket = this.bucketName;
-			params.Body = Buffer.isBuffer(data) ? data : (typeof data === 'object') ? JSON.stringify(data) : data;
+	params.Bucket = this.bucketName;
+	params.Body = Buffer.isBuffer(data) ? data : (typeof data === 'object') ? JSON.stringify(data) : data;
 
-			this.s3.putObject(params, callback);			
-		};
+	this.s3.putObject(params, callback);
+};
 
 S3Client.prototype.getSignedUrl = function(key, bucketName, callback) {
 			
-			if (typeof bucketName == 'function') {
-				callback = bucketName;
-				bucketName = null;
-			}
-			
-			var bucket = bucketName || this.bucketName;			
-			var params = {Bucket: bucket, Key: key, Expires: this.urlExpiration };
+	if (typeof bucketName == 'function') {
+		callback = bucketName;
+		bucketName = null;
+	}
 
-			console.log('S3Clinet: getSignedUrl');
-			console.log('*** PARAMS ***');
-			console.log(params);
+	var bucket = bucketName || this.bucketName;
+	var params = {Bucket: bucket, Key: key, Expires: this.expiration };
 
-			this.s3.getSignedUrl('getObject', params, callback);
-		};
+	console.log('S3Clinet: getSignedUrl');
+	console.log('*** PARAMS ***');
+	console.log(params);
+
+	this.s3.getSignedUrl('getObject', params, callback);
+};
+
+S3Client.prototype.getLocation = function(key, callback) {
+	this.getSignedUrl(key, this.bucketName, callback);
+};
 
 module.exports = S3Client;
 

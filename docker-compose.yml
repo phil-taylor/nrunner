@@ -1,0 +1,18 @@
+version: '2'
+services:
+  server:
+    image: phil-taylor/nrunner:latest
+    ports:
+      - "3000:3000"
+    links:
+      - amqp:queue
+    command: node start_server.js
+
+  worker:
+    image: phil-taylor/nrunner:latest
+    links:
+      - amqp:queue
+    command: node start_worker.js
+
+  amqp:
+    image: rabbitmq:latest

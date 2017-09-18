@@ -36,13 +36,35 @@ process.on('uncaughtException', function(err) {
   console.error(err.stack);
 });
 
-var urlExpiration = config.Worker.urlExpiration || 60;
+var expiration = config.Worker.expiration || 60;
+
+
+/*
+	TODO: NEW CONFIG
+
+	{
+		queue: {
+			credentials: {}
+			provider: 'sqs',
+			tasks: ''
+		},
+
+		storage:{
+			 credentials: {}
+			 provider: 's3',
+			 tasks: '',
+			 reports: '',
+			 expiration: 60
+		}
+	}
+
+*/
 
 service
   .AWSCredentials(config.AWSCredentials)
   .taskQueue(config.Worker.taskQueue)
-  .taskBucket(config.Worker.taskBucket)
-  .reportBucket(config.Worker.reportBucket)
-  .signedUrlExpiration(urlExpiration);
+  .taskLocation(config.Worker.taskLocation)
+  .reportLocation(config.Worker.reportLocation)
+  .setExpiration(expiration);
 
 module.exports = service;

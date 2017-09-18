@@ -68,9 +68,9 @@ Server.prototype.start = function() {
 	console.log('* AWS Region     : ' + config.AWSCredentials.region );
 	console.log('* AWS Account Id : ' + config.AWSCredentials.accountId );
 	console.log('* Task Queue     : ' + config.Worker.taskQueue );
-	console.log('* Task Bucket    : ' + config.Worker.taskBucket );
-	console.log('* Report Bucket  : ' + config.Worker.reportBucket );
-	console.log('* Url Expiration : ' + config.Worker.urlExpiration );
+	console.log('* Task Location    : ' + config.Worker.taskLocation );
+	console.log('* Report Location  : ' + config.Worker.reportLocation );
+	console.log('* Url Expiration : ' + config.Worker.expiration );
 	console.log('************************************************************');
 
 
